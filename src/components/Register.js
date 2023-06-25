@@ -11,6 +11,18 @@ import "./Register.css";
 const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
 
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleEvent = (e) => {
+    const [key, value] = [e.target.name, e.target.value];
+    setFormData((currFormData) => ({ ...currFormData, [key]: value }));
+  };
+
+  const [loading, setLoading] = useState(false);
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement the register function
   /**
@@ -36,6 +48,32 @@ const Register = () => {
    * }
    */
   const register = async (formData) => {
+    if (!validateInput(formData)) return;
+    try {
+      setLoading(true);
+      await axios.post(`${config.endpoint}/auth/register`, {
+        username: formData.username,
+        password: formData.password,
+      });
+
+      setFormData({
+        username: "",
+        password: "",
+        confirmPassword: "",
+      });
+      enqueueSnackbar("Registered successfully", { variant: "success" });
+      setLoading(false);
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, { variant: "error" });
+      } else {
+        enqueueSnackbar(
+          "Something went wrong. Check that the backend is running, reachable and returns valid JSON.",
+          { variant: "error" }
+        );
+      }
+      setLoading(false);
+    }
   };
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement user input validation logic
@@ -57,6 +95,31 @@ const Register = () => {
    * -    Check that confirmPassword field has the same value as password field - Passwords do not match
    */
   const validateInput = (data) => {
+    if (!data.username) {
+      enqueueSnackbar("Username is a required field", { variant: "warning" });
+      return false;
+    }
+    if (data.username.length < 6) {
+      enqueueSnackbar("Username must be at least 6 characters", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (!data.password) {
+      enqueueSnackbar("Password is a required field", { variant: "warning" });
+      return false;
+    }
+    if (data.password.length < 6) {
+      enqueueSnackbar("Username must be at least 6 characters", {
+        variant: "warning",
+      });
+      return false;
+    }
+    if (data.password !== data.confirmPassword) {
+      enqueueSnackbar("Passwords do not match", { variant: "warning" });
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -78,6 +141,9 @@ const Register = () => {
             name="username"
             placeholder="Enter Username"
             fullWidth
+            value={formData.username}
+            required
+            onChange={handleEvent}
           />
           <TextField
             id="password"
@@ -88,6 +154,9 @@ const Register = () => {
             helperText="Password must be atleast 6 characters length"
             fullWidth
             placeholder="Enter a password with minimum 6 characters"
+            onChange={handleEvent}
+            value={formData.password}
+            required
           />
           <TextField
             id="confirmPassword"
@@ -96,15 +165,32 @@ const Register = () => {
             name="confirmPassword"
             type="password"
             fullWidth
+            value={formData.confirmPassword}
+            onChange={handleEvent}
+            required
           />
-           <Button className="button" variant="contained">
-            Register Now
-           </Button>
+          {loading ? (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+            >
+              <CircularProgress color="success" />
+            </Box>
+          ) : (
+            <Button
+              className="button"
+              variant="contained"
+              onClick={() => register(formData)}
+            >
+              Register Now
+            </Button>
+          )}
           <p className="secondary-action">
-            Already have an account?{" "}
-             <a className="link" href="#">
+            Already have an account?
+            <a className="link" href="#">
               Login here
-             </a>
+            </a>
           </p>
         </Stack>
       </Box>

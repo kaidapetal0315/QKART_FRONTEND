@@ -28,6 +28,7 @@
 }
 
 .link {
+  margin-left: 3px;
   font-weight: 700;
   text-decoration: none;
   color: #45c09f;
@@ -54,6 +55,9 @@
 }
 
 @media screen and (min-width: 768px) {
+  .content {
+    justify-content: flex-end;
+  }
   .form {
     min-width: 24rem;
   }
