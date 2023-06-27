@@ -12,6 +12,19 @@ import "./Login.css";
 const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
 
+  const history = useHistory();
+
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
+
+  const handleEvent = (e) => {
+    const [key, value] = [e.target.name, e.target.value];
+    setFormData((currFormData) => ({ ...currFormData, [key]: value }));
+  };
+
   // TODO: CRIO_TASK_MODULE_LOGIN - Fetch the API response
   /**
    * Perform the Login API call
@@ -38,6 +51,32 @@ const Login = () => {
    *
    */
   const login = async (formData) => {
+    if (!validateInput(formData)) return;
+    try {
+      setLoading(true);
+      const res = await axios.post(`${config.endpoint}/auth/login`, formData);
+
+      persistLogin(res.data.token, res.data.username, res.data.balance);
+
+      enqueueSnackbar("Logged in successfully", { variant: "success" });
+      setFormData({
+        username: "",
+        password: "",
+      });
+
+      setLoading(false);
+      history.push("/");
+    } catch (e) {
+      if (e.response && e.response.status === 400) {
+        enqueueSnackbar(e.response.data.message, { variant: "error" });
+      } else {
+        enqueueSnackbar(
+          "Something went wrong. Check that the backend is running, reachable and returns valid JSON.",
+          { variant: "error" }
+        );
+      }
+      setLoading(false);
+    }
   };
 
   // TODO: CRIO_TASK_MODULE_LOGIN - Validate the input
@@ -56,6 +95,15 @@ const Login = () => {
    * -    Check that password field is not an empty value - "Password is a required field"
    */
   const validateInput = (data) => {
+    if (!data.username) {
+      enqueueSnackbar("Username is a required field", { variant: "warning" });
+      return false;
+    }
+    if (!data.password) {
+      enqueueSnackbar("Password is a required field", { variant: "warning" });
+      return false;
+    }
+    return true;
   };
 
   // TODO: CRIO_TASK_MODULE_LOGIN - Persist user's login information
@@ -75,6 +123,9 @@ const Login = () => {
    * -    `balance` field in localStorage can be used to store the balance amount in the user's wallet
    */
   const persistLogin = (token, username, balance) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("username", username);
+    localStorage.setItem("balance", balance);
   };
 
   return (
@@ -87,6 +138,53 @@ const Login = () => {
       <Header hasHiddenAuthButtons />
       <Box className="content">
         <Stack spacing={2} className="form">
+          <h1 className="title">Login</h1>
+          <TextField
+            id="username"
+            label="Username"
+            variant="outlined"
+            title="Username"
+            name="username"
+            placeholder="Enter Username"
+            fullWidth
+            required
+            onChange={handleEvent}
+            value={formData.username}
+          />
+          <TextField
+            id="password"
+            label="Password"
+            variant="outlined"
+            title="Password"
+            name="password"
+            type="password"
+            placeholder="Enter Password"
+            fullWidth
+            required
+            onChange={handleEvent}
+            value={formData.password}
+          />
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center">
+              <CircularProgress color="success" />
+            </Box>
+          ) : (
+            <Button
+              className="button"
+              variant="contained"
+              onClick={() => {
+                login(formData);
+              }}
+            >
+              LOGIN TO QKART
+            </Button>
+          )}
+          <p className="secondary-action">
+            Don’t have an account?
+            <Link className="link" to="/register">
+              Register now
+            </Link>
+          </p>
         </Stack>
       </Box>
       <Footer />

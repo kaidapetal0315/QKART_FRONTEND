@@ -12,7 +12,17 @@ function App() {
   return (
     <div className="App">
       {/* TODO: CRIO_TASK_MODULE_LOGIN - To add configure routes and their mapping */}
+      <Switch>
+        <Route exact path="/">
+          <Products />
+        </Route>
+        <Route exact path="/register">
           <Register />
+        </Route>
+        <Route path="/login">
+          <Login />
+        </Route>
+      </Switch>
     </div>
   );
 }
