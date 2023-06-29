@@ -14,6 +14,31 @@ import "./ProductCard.css";
 const ProductCard = ({ product, handleAddToCart }) => {
   return (
     <Card className="card">
+      <CardMedia component="img" image={product.image} alt={product.name} />
+      <CardContent>
+        <Typography variant="h6" color="text.secondary">
+          {product.name}
+        </Typography>
+        <Typography
+          gutterBottom
+          paddingY="0.5rem"
+          fontWeight="700"
+          component="div"
+        >
+          $ {product.cost}
+        </Typography>
+        <Rating name="read-only" value={product.rating} readOnly precision={0.5}/>
+      </CardContent>
+      <CardActions className="card-actions">
+        <Button
+          startIcon={<AddShoppingCartOutlined />}
+          className="card-button"
+          variant="contained"
+          fullWidth
+        >
+          Add to cart
+        </Button>
+      </CardActions>
     </Card>
   );
 };
