@@ -162,6 +162,7 @@ const Products = () => {
 
   useEffect(() => {
     performAPICall();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -227,9 +228,9 @@ const Products = () => {
                   </Grid>
                 ))
               ) : (
-                <Box>
+                <Box className='loading'>
                   <SentimentDissatisfied color="action" />
-                  <h4 style={{ color: "#363636" }}>No products found</h4>
+                  <h4 style={{ color: "#636363" }}>No products found</h4>
                 </Box>
               )}
             </Grid>
