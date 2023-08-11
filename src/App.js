@@ -23,6 +23,7 @@ function App() {
           <Login />
         </Route>
       </Switch>
+          <Register />
     </div>
   );
 }
