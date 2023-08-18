@@ -13,6 +13,7 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import ProductCard from "./ProductCard";
+import Cart, { generateCartItemsFrom } from "./Cart";
 import "./Products.css";
 
 // Definition of Data Structures used
@@ -34,6 +35,9 @@ const Products = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [debounceTimeout, SetDebounceTimeout] = useState(0);
+  const [items, setItems] = useState([]);
+
+  const token = localStorage.getItem("token");
 
   // const token = localStorage.getItem("token");
 
@@ -161,11 +165,16 @@ const Products = () => {
   };
 
   useEffect(() => {
-    performAPICall();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const onLoadHandler = async () => {
+      const porductsData = await performAPICall();
+      const cartData = await fetchCart(token);
+      const cartDetails = generateCartItemsFrom(cartData, porductsData);
+      setItems(cartDetails);
+    };
+
+    onLoadHandler();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-
   /**
    * Perform the API call to fetch the user's cart and return the response
    *
@@ -199,6 +208,15 @@ const Products = () => {
 
     try {
       // TODO: CRIO_TASK_MODULE_CART - Pass Bearer token inside "Authorization" header to get data from "GET /cart" API and return the response data
+      const URL = `${config.endpoint}/cart`;
+      const res = await axios.get(URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return res.data;
     } catch (e) {
       if (e.response && e.response.status === 400) {
         enqueueSnackbar(e.response.data.message, { variant: "error" });
@@ -214,7 +232,6 @@ const Products = () => {
     }
   };
 
-
   // TODO: CRIO_TASK_MODULE_CART - Return if a product already exists in the cart
   /**
    * Return if a product already is present in the cart
@@ -229,6 +246,7 @@ const Products = () => {
    *
    */
   const isItemInCart = (items, productId) => {
+    if (items) return items.findIndex((item) => item._id === productId) !== -1;
   };
 
   /**
@@ -275,15 +293,78 @@ const Products = () => {
     qty,
     options = { preventDuplicate: false }
   ) => {
+    if (!token) {
+      enqueueSnackbar("Login to add an item to the Cart", {
+        variant: "warning",
+      });
+      return;
+    }
+
+    if (options.preventDuplicate && isItemInCart(items, productId)) {
+      enqueueSnackbar(
+        "Item already in cart. Use the cart sidebar to update quantity or remove item.",
+        {
+          variant: "warning",
+        }
+      );
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        `${config.endpoint}/cart`,
+        { productId, qty },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const cartItems = generateCartItemsFrom(res.data, products);
+      setItems(cartItems);
+    } catch (error) {
+      if (error.response) {
+        enqueueSnackbar(error.response.message, { variant: "error" });
+      } else {
+        enqueueSnackbar(
+          "Could not fetch products. Check that the backend is running, reachable and returns valid JSON.",
+          {
+            variant: "error",
+          }
+        );
+      }
+    }
   };
 
+  const getProdcurtsGridItems = (filteredProducts) => {
+    return filteredProducts.length ? (
+      filteredProducts.map((product) => (
+        <Grid item xs={6} md={3} key={product._id}>
+          <ProductCard
+            product={product}
+            handleAddToCart={async (productId, qty) => {
+              await addToCart(token, items, products, productId, qty, {
+                preventDuplicate: true,
+              });
+            }}
+          />
+        </Grid>
+      ))
+    ) : (
+      <Box className="loading">
+        <SentimentDissatisfied color="action" />
+        <h4 style={{ color: "#636363" }}>No products found</h4>
+      </Box>
+    );
+  };
 
   return (
     <div>
       <Header>
         {/* TODO: CRIO_TASK_MODULE_PRODUCTS - Display search bar in the header for Products page */}
         <TextField
-          className="search-destop"
+          className="search-desktop"
           size="small"
           InputProps={{
             className: "search",
@@ -320,6 +401,7 @@ const Products = () => {
           item
           className="product-grid"
           xs={12}
+          md={token && products.length ? 9 : 12}
         >
           <Box className="hero">
             <p className="hero-heading">
@@ -327,28 +409,29 @@ const Products = () => {
               to your door step
             </p>
           </Box>
-          {loading ? (
-            <Box className="loading">
-              <CircularProgress />
-              <h4>Loading Products</h4>
-            </Box>
-          ) : (
-            <Grid container marginY="1rem" paddingX="1rem" spacing={2}>
-              {filteredProducts.length ? (
-                filteredProducts.map((product) => (
-                  <Grid item xs={6} md={3} key={product._id}>
-                    <ProductCard product={product} />
-                  </Grid>
-                ))
-              ) : (
-                <Box className='loading'>
-                  <SentimentDissatisfied color="action" />
-                  <h4 style={{ color: "#636363" }}>No products found</h4>
-                </Box>
-              )}
-            </Grid>
-          )}
+          <Grid container marginY="1rem" paddingX="1rem" spacing={2}>
+            {loading ? (
+              <Box className="loading">
+                <CircularProgress />
+                <h4>Loading Products...</h4>
+              </Box>
+            ) : (
+              getProdcurtsGridItems(filteredProducts)
+            )}
+          </Grid>
         </Grid>
+
+        {token && (
+          <Grid item xs={12} md={3} bgcolor="#E9F5E1">
+            <Cart
+              items={items}
+              products={products}
+              handleQuantity={(productId, qty) => {
+                addToCart(token, items, products, productId, qty);
+              }}
+            />
+          </Grid>
+        )}
       </Grid>
       <Footer />
     </div>

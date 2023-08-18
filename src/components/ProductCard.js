@@ -25,7 +25,7 @@ const ProductCard = ({ product, handleAddToCart }) => {
           fontWeight="700"
           component="div"
         >
-          $ {product.cost}
+          ${product.cost}
         </Typography>
         <Rating name="read-only" value={product.rating} readOnly precision={0.5}/>
       </CardContent>
@@ -35,6 +35,9 @@ const ProductCard = ({ product, handleAddToCart }) => {
           className="card-button"
           variant="contained"
           fullWidth
+          onClick={() => {
+            handleAddToCart(product._id, 1)
+          }}
         >
           Add to cart
         </Button>

@@ -8,7 +8,6 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
-import { useHistory, Link } from "react-router-dom";
 
 const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -115,7 +114,7 @@ const Register = () => {
       return false;
     }
     if (data.password.length < 6) {
-      enqueueSnackbar("Username must be at least 6 characters", {
+      enqueueSnackbar("Password must be at least 6 characters", {
         variant: "warning",
       });
       return false;
