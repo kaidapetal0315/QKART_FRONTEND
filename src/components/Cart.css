@@ -38,3 +38,7 @@
     align-items: center;
     justify-content: space-between;
 }
+
+.cart-row p{
+    margin: 6px 0;
+}

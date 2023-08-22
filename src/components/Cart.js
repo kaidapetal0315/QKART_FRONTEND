@@ -108,7 +108,14 @@ export const getTotalCartValue = (items = []) => {
  *    Total quantity of products added to the cart
  *
  */
-export const getTotalItems = (items = []) => {};
+export const getTotalItems = (items = []) => {
+  let totalQty = 0;
+  if (items) {
+    items.forEach((item) => (totalQty += item.qty));
+  }
+
+  return totalQty;
+};
 
 // TODO: CRIO_TASK_MODULE_CHECKOUT - Add static quantity view for Checkout page cart
 /**
@@ -159,7 +166,7 @@ const ItemQuantity = ({ value, handleAdd, handleDelete }) => {
  *    If product quantity on cart is to be displayed as read only without the + - options to change quantity
  *
  */
-const Cart = ({ products, items = [], handleQuantity }) => {
+const Cart = ({ products, items = [], handleQuantity, isReadOnly }) => {
   const history = useHistory();
   if (!items.length) {
     return (
@@ -206,16 +213,21 @@ const Cart = ({ products, items = [], handleQuantity }) => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <ItemQuantity
-                  // Add required props by checking implementation
-                  value={item.qty}
-                  handleAdd={async () => {
-                    await handleQuantity(item._id, item.qty + 1);
-                  }}
-                  handleDelete={async () => {
-                    await handleQuantity(item._id, item.qty - 1);
-                  }}
-                />
+                {!isReadOnly && (
+                  <ItemQuantity
+                    // Add required props by checking implementation
+                    value={item.qty}
+                    handleAdd={async () => {
+                      await handleQuantity(item._id, item.qty + 1);
+                    }}
+                    handleDelete={async () => {
+                      await handleQuantity(item._id, item.qty - 1);
+                    }}
+                  />
+                )}
+
+                {isReadOnly && <div>Qty:{item.qty}</div>}
+
                 <Box padding="0.5rem" fontWeight="700">
                   ${item.cost}
                 </Box>
@@ -223,6 +235,7 @@ const Cart = ({ products, items = [], handleQuantity }) => {
             </Box>
           </Box>
         ))}
+
         <Box
           padding="1rem"
           display="flex"
@@ -243,20 +256,44 @@ const Cart = ({ products, items = [], handleQuantity }) => {
           </Box>
         </Box>
 
-        <Box display="flex" justifyContent="flex-end" className="cart-footer">
-          <Button
-            color="primary"
-            variant="contained"
-            startIcon={<ShoppingCart />}
-            className="checkout-btn"
-            onClick={() => {
-              history.push("/checkout");
-            }}
-          >
-            Checkout
-          </Button>
-        </Box>
+        {!isReadOnly && (
+          <Box display="flex" justifyContent="flex-end" className="cart-footer">
+            <Button
+              color="primary"
+              variant="contained"
+              startIcon={<ShoppingCart />}
+              className="checkout-btn"
+              onClick={() => {
+                history.push("/checkout");
+              }}
+            >
+              Checkout
+            </Button>
+          </Box>
+        )}
       </Box>
+
+      {isReadOnly && (
+        <Box className="cart" padding="1rem">
+          <h2>Order Details</h2>
+          <Box className="cart-row">
+            <p>Products</p>
+            <p>{getTotalItems(items)}</p>
+          </Box>
+          <Box className="cart-row">
+            <p>Subtotal</p>
+            <p>${getTotalCartValue(items)}</p>
+          </Box>
+          <Box className="cart-row">
+            <p>Shipping Charges</p>
+            <p>$0</p>
+          </Box>
+          <Box className="cart-row" fontSize="1.25rem" fontWeight="700">
+            <p>Total</p>
+            <p>${getTotalCartValue(items)}</p>
+          </Box>
+        </Box>
+      )}
     </>
   );
 };
